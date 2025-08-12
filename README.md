@@ -160,6 +160,12 @@ Wobbly Wonders includes a comprehensive test suite with 40+ automated tests cove
 
 MIT License - Use freely, modify as needed, share the love! ❤️
 
+## Future Feature Potential 
+- Google Drive/Dropbox/One Drive integration with support for auto-backup
+- Reflection prompt support
+- Persistent AI chats
+- Open to ideas!
+
 ---
 
 *Made for me because I couldn't find a simple app out there, shared with ❤️ for everyone who believes in the power of reflection and personal growth.*
