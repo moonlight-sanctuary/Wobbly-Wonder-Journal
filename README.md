@@ -6,7 +6,7 @@
 
 [![This helped me](https://api.countapi.xyz/hit/moonlight-sanctuary-Wobbly-Wonder-Journal/helped-me/badge.svg?color=purple)](https://api.countapi.xyz/hit/moonlight-sanctuary-Wobbly-Wonder-Journal/helped-me)
 
-If you enjoyed using this app, please drop a star on the repo. I made it super private (i.e. there are no external integrations, signins, or even http requests that go out from the app) so I have no idea if its even being used. If you like it, drop a star so I can see. Or hit the button above. Or both?
+If you enjoyed using this app, please drop a star on the repo. I made it super private (i.e. there are no external integrations, sign-ins, or even http requests that go out from the app) so I have no idea if its even being used. If you like it, drop a star so I can see. Or hit the button above. Or both?
 
 
 ## 🌟 Why Reflect?
