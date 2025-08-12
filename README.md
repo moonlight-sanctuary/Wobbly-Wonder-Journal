@@ -1,4 +1,4 @@
-# ✨ Wobbly Wonders - Your Personal Journaling Companion
+# ✨ Wobbly Wonders - Your Personal Space
 
 > A beautiful, empathetic journaling application that creates a safe space for your thoughts and reflections. Completely private, runs entirely in your browser, with an optional AI companion that truly cares about your (often wobbly but always wonderful) journey.
 
