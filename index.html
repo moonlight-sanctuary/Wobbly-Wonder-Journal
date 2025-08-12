@@ -54,16 +54,8 @@
                 <h4 class="section-title">AI Assistant</h4>
                 
                 <button id="aiChatBtn" class="tool-btn ai-btn">
-                    <span class="tool-icon">💬</span>
+                    <span class="tool-icon">💭</span>
                     <span>Chat with AI</span>
-                </button>
-                <button id="aiEntrySummaryBtn" class="tool-btn ai-btn">
-                    <span class="tool-icon">✨</span>
-                    <span>Summarize Entry</span>
-                </button>
-                <button id="aiSummaryBtn" class="tool-btn ai-btn">
-                    <span class="tool-icon">📝</span>
-                    <span>Summarize All</span>
                 </button>
                 
                 <div class="ai-status" id="aiStatus">
@@ -72,22 +64,9 @@
                 </div>
                 
                 <div class="ai-capabilities" id="aiCapabilities" style="display: none;">
-                    <div class="capability-item">💬 Chat about your entries</div>
-                    <div class="capability-item">📝 Generate summaries</div>
-                    <div class="capability-item">🔍 Find topics and themes</div>
-                </div>
-            </div>
-            
-            <!-- AI Chat Interface (hidden by default) -->
-            <div class="ai-chat-interface" id="aiChatInterface" style="display: none;">
-                <div class="chat-header">
-                    <h4>AI Chat</h4>
-                    <button class="chat-close-btn" id="chatCloseBtn">×</button>
-                </div>
-                <div class="chat-messages" id="chatMessages"></div>
-                <div class="chat-input-container">
-                    <input type="text" id="chatInput" placeholder="Ask about your journal entries..." class="chat-input">
-                    <button id="chatSendBtn" class="chat-send-btn">Send</button>
+                    <div class="capability-item">💭 Chat about your entries</div>
+                    <div class="capability-item">🔍 Explore themes and patterns</div>
+                    <div class="capability-item">💡 Get insights and perspectives</div>
                 </div>
             </div>
             
@@ -138,14 +117,15 @@
 This is your private space for thoughts and reflections. Everything you write is automatically saved to your browser and stays completely private on your device.
 
 ✨ AI Features (powered by Ollama running locally):
-• Generate summaries of your entries
-• Create titles for easy organization  
-• Chat about your journal entries
+• Chat with AI about your journal entries and patterns
+• Get insights and perspectives on your writing
+• Explore themes across your reflections
 • All AI processing happens on your computer
 
 📝 Getting Started:
 • Just start typing - your entries auto-save as you write
 • Use the sidebar buttons (‹ ›) to access previous entries and tools
+• Click 'Chat with AI' to reflect on your entries
 • Switch themes and AI models in the right sidebar
 • Your data never leaves your device
 
@@ -160,19 +140,30 @@ Go ahead and start writing about your day, thoughts, or anything on your mind...
                 </div>
                 <div class="word-count" id="wordCount">0 words</div>
             </div>
-            <div class="entry-summary" id="entrySummary" style="display: none;">
-                <div class="summary-header">
-                    <h4>✨ AI Summary</h4>
-                    <div class="summary-actions">
-                        <button class="summary-action-btn" id="summaryRegenerateBtn" title="Regenerate summary">🔄</button>
-                        <button class="summary-action-btn" id="summaryDeleteBtn" title="Delete summary">🗑️</button>
-                        <button class="summary-close-btn" id="summaryCloseBtn" title="Hide summary">×</button>
-                    </div>
-                </div>
-                <div class="summary-content" id="summaryContent"></div>
-            </div>
+
         </div>
     </main>
+
+    <!-- Floating AI Chat Interface -->
+    <div class="floating-ai-chat" id="floatingAIChat" style="display: none;">
+        <div class="chat-header">
+            <h4>💭 Reflect with AI</h4>
+            <button class="chat-close-btn" id="chatCloseBtn" title="Close chat">×</button>
+        </div>
+        <div class="chat-disclaimer">
+            <small>💡 This conversation isn't saved - it's just for reflection in the moment</small>
+        </div>
+        <div class="chat-messages" id="chatMessages">
+            <div class="chat-welcome">
+                <p>I can help you explore your journal entries and identify patterns in your thinking.</p>
+                <p>Ask me about specific entries, themes across your writing, or insights from your reflections.</p>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <input type="text" id="chatInput" placeholder="Ask about your current entry or journal..." class="chat-input">
+            <button id="chatSendBtn" class="chat-send-btn">Send</button>
+        </div>
+    </div>
 
     <!-- Floating New Entry Button -->
     <button id="floatingNewBtn" class="floating-new-btn" title="New Entry">

@@ -571,56 +571,9 @@ function setupCoreTests() {
         };
     }, 'ai-enhanced');
 
-    // Entry Summary Tests
-    tf.addTest('Entry Summary Elements Present', async () => {
-        const entrySummary = document.getElementById('entrySummary');
-        const summaryContent = document.getElementById('summaryContent');
-        const aiEntrySummaryBtn = document.getElementById('aiEntrySummaryBtn');
-        
-        return {
-            passed: entrySummary !== null && summaryContent !== null && aiEntrySummaryBtn !== null,
-            message: (entrySummary && summaryContent && aiEntrySummaryBtn) ? 'Entry summary elements present' : 'Entry summary elements missing'
-        };
-    }, 'entry-summary');
+    // Entry Summary Tests Removed - No longer using summarization functionality
 
-    tf.addTest('Entry Title Generation Button Present', async () => {
-        const app = window.journal;
-        
-        // Add a test entry first
-        const testEntry = {
-            id: 'test-entry-title-123',
-            content: 'Test entry for title generation',
-            date: new Date().toISOString(),
-            wordCount: 5
-        };
-        app.entries.unshift(testEntry);
-        app.renderEntries();
-        
-        const titleBtn = document.querySelector('.entry-summarize-btn');
-        
-        return {
-            passed: titleBtn !== null,
-            message: titleBtn ? 'Entry title generation buttons present' : 'Entry title generation buttons missing'
-        };
-    }, 'entry-summary');
-
-    tf.addTest('Entry Summary Show/Hide Functionality', async () => {
-        const app = window.journal;
-        const entrySummary = document.getElementById('entrySummary');
-        
-        // Test show
-        app.showEntrySummary('Test summary content');
-        const isVisible = entrySummary.style.display !== 'none';
-        
-        // Test hide
-        app.hideEntrySummary();
-        const isHidden = entrySummary.style.display === 'none';
-        
-        return {
-            passed: isVisible && isHidden,
-            message: (isVisible && isHidden) ? 'Entry summary show/hide working' : 'Entry summary show/hide failed'
-        };
-    }, 'entry-summary');
+    // Entry title generation and summary tests removed - no longer using these features
 
     // Comprehensive AI Chat Tests
     tf.addTest('AI Chat Toggle Functionality', async () => {
@@ -739,12 +692,11 @@ function setupCoreTests() {
         }
         
         const entryItem = document.querySelector('.entry-item');
-        const summarizeBtn = entryItem?.querySelector('.entry-summarize-btn');
         const deleteBtn = entryItem?.querySelector('.entry-delete-btn');
         
         return {
-            passed: entryItem && summarizeBtn && deleteBtn,
-            message: (entryItem && summarizeBtn && deleteBtn) ? 'Entry action buttons present' : 'Entry action buttons missing'
+            passed: entryItem && deleteBtn,
+            message: (entryItem && deleteBtn) ? 'Entry action buttons present' : 'Entry action buttons missing'
         };
     }, 'entry-management');
 
@@ -786,10 +738,8 @@ function setupCoreTests() {
         const aiService = app.aiService;
         
         const hasRequiredMethods = typeof aiService.checkOllamaStatus === 'function' &&
-                                  typeof aiService.generateSummary === 'function' &&
-                                  typeof aiService.generateEntryTitle === 'function' &&
                                   typeof aiService.chatWithEntries === 'function' &&
-                                  typeof aiService.summarizeAllEntries === 'function';
+                                  typeof aiService.createSmartContext === 'function';
         
         return {
             passed: hasRequiredMethods,
@@ -812,121 +762,41 @@ function setupCoreTests() {
         };
     }, 'ai-enhanced');
 
-    tf.addTest('Entry Summary UI Integration', async () => {
-        const app = window.journal;
-        
-        // Test summary display
-        app.showEntrySummary('Test summary content');
-        const summaryVisible = document.getElementById('entrySummary').style.display !== 'none';
-        
-        // Test summary content
-        const summaryContent = document.getElementById('summaryContent').textContent;
-        const hasContent = summaryContent.includes('Test summary content');
-        
-        // Test close functionality
-        app.hideEntrySummary();
-        const summaryHidden = document.getElementById('entrySummary').style.display === 'none';
-        
-        return {
-            passed: summaryVisible && hasContent && summaryHidden,
-            message: (summaryVisible && hasContent && summaryHidden) ? 'Entry summary UI integration working' : 'Entry summary UI integration failed'
-        };
-    }, 'entry-summary');
+    // Entry Summary UI Integration test removed - no longer using summarization
 
-    // Entry-Specific Summary Persistence Tests
-    tf.addTest('Summary Entry Association', async () => {
-        const app = window.journal;
-        
-        // Create test entry with summary
-        const testEntry = {
-            id: 'test-summary-association-123',
-            content: 'Test entry with summary',
-            date: new Date().toISOString(),
-            wordCount: 4,
-            summary: 'Test summary content',
-            title: null
-        };
-        app.entries.unshift(testEntry);
-        
-        // Load the entry
-        app.loadEntry(testEntry.id);
-        
-        // Check if summary is displayed
-        const summaryVisible = document.getElementById('entrySummary').style.display !== 'none';
-        const summaryContent = document.getElementById('summaryContent').textContent;
-        const hasCorrectContent = summaryContent.includes('Test summary content');
-        
-        return {
-            passed: summaryVisible && hasCorrectContent,
-            message: (summaryVisible && hasCorrectContent) ? 'Summary entry association working' : 'Summary entry association failed'
-        };
-    }, 'entry-summary-persistence');
+    // Entry-Specific Summary Persistence Tests Removed - No longer using summarization
 
-    tf.addTest('Summary Hides When Switching Entries', async () => {
-        const app = window.journal;
-        
-        // Create two test entries - one with summary, one without
-        const entryWithSummary = {
-            id: 'test-with-summary-123',
-            content: 'Entry with summary',
-            date: new Date().toISOString(),
-            wordCount: 3,
-            summary: 'This entry has a summary',
-            title: null
-        };
-        
-        const entryWithoutSummary = {
-            id: 'test-without-summary-123',
-            content: 'Entry without summary',
-            date: new Date(Date.now() - 1000).toISOString(),
-            wordCount: 3,
-            summary: null,
-            title: null
-        };
-        
-        app.entries.unshift(entryWithSummary, entryWithoutSummary);
-        
-        // Load entry with summary
-        app.loadEntry(entryWithSummary.id);
-        const summaryVisibleFirst = document.getElementById('entrySummary').style.display !== 'none';
-        
-        // Switch to entry without summary
-        app.loadEntry(entryWithoutSummary.id);
-        const summaryHiddenSecond = document.getElementById('entrySummary').style.display === 'none';
+    // Floating AI Chat Tests
+    tf.addTest('Floating AI Chat Elements Present', async () => {
+        const floatingChat = document.getElementById('floatingAIChat');
+        const chatMessages = document.getElementById('chatMessages');
+        const chatInput = document.getElementById('chatInput');
+        const chatSendBtn = document.getElementById('chatSendBtn');
+        const chatCloseBtn = document.getElementById('chatCloseBtn');
         
         return {
-            passed: summaryVisibleFirst && summaryHiddenSecond,
-            message: (summaryVisibleFirst && summaryHiddenSecond) ? 'Summary properly hides when switching entries' : 'Summary switching behavior failed'
+            passed: floatingChat && chatMessages && chatInput && chatSendBtn && chatCloseBtn,
+            message: (floatingChat && chatMessages && chatInput && chatSendBtn && chatCloseBtn) ? 'Floating AI chat elements present' : 'Floating AI chat elements missing'
         };
-    }, 'entry-summary-persistence');
+    }, 'ai-chat');
 
-    tf.addTest('Summary Action Buttons Present', async () => {
-        const regenerateBtn = document.getElementById('summaryRegenerateBtn');
-        const deleteBtn = document.getElementById('summaryDeleteBtn');
-        const closeBtn = document.getElementById('summaryCloseBtn');
-        
-        return {
-            passed: regenerateBtn && deleteBtn && closeBtn,
-            message: (regenerateBtn && deleteBtn && closeBtn) ? 'Summary action buttons present' : 'Summary action buttons missing'
-        };
-    }, 'entry-summary-persistence');
-
-    tf.addTest('New Entry Hides Summary', async () => {
+    tf.addTest('AI Chat Toggle Functionality', async () => {
         const app = window.journal;
+        const floatingChat = document.getElementById('floatingAIChat');
         
-        // Show a summary first
-        app.showEntrySummary('Test summary', 'test-id');
-        const summaryVisible = document.getElementById('entrySummary').style.display !== 'none';
+        // Test open
+        app.openAIChat();
+        const isOpen = floatingChat.style.display === 'flex';
         
-        // Create new entry
-        app.newEntry();
-        const summaryHidden = document.getElementById('entrySummary').style.display === 'none';
+        // Test close
+        app.closeAIChat();
+        const isClosed = floatingChat.style.display === 'none';
         
         return {
-            passed: summaryVisible && summaryHidden,
-            message: (summaryVisible && summaryHidden) ? 'New entry properly hides summary' : 'New entry summary hiding failed'
+            passed: isOpen && isClosed,
+            message: (isOpen && isClosed) ? 'AI chat toggle working' : 'AI chat toggle failed'
         };
-    }, 'entry-summary-persistence');
+    }, 'ai-chat');
 
     tf.addTest('Mobile Responsiveness Check', async () => {
         const welcomeContent = document.querySelector('.welcome-content');
