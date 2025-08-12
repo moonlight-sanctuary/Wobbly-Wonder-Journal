@@ -577,7 +577,7 @@ class AIService {
 
                 if (hasModel) {
                     this.updateStatus('connected');
-                    this.capabilities = ['Chat with AI', 'Summarize All', 'Find Topics'];
+                    this.capabilities = ['Chat with AI', 'Explore Patterns', 'Reflect on Entries'];
                 } else {
                     this.updateStatus('model-missing');
                 }
@@ -636,128 +636,44 @@ class AIService {
         this.statusCallbacks.push(callback);
     }
 
-    async generateSummary(content) {
-        if (this.status !== 'connected') {
-            throw new Error('AI service not available');
-        }
 
-        // First pass: Generate initial summary with empathy
-        const initialPrompt = `You are a caring, empathetic companion helping someone reflect on their personal journal. Your role is to offer gentle insights, validation, and support.
 
-Please create a warm, supportive summary of this journal entry that:
-1. Acknowledges the courage it takes to share personal thoughts
-2. Validates the emotions and experiences shared
-3. Highlights any strengths, growth, or positive insights
-4. Uses caring, non-judgmental language
-5. Focuses on what matters most to the person writing
+    // Entry title generation removed - focusing on chat-based AI interaction
 
-Remember: This is someone's personal reflection. Respond with empathy, understanding, and gentle encouragement.
-
-Journal entry:
-${content}
-
-Supportive summary:`;
-
-        const initialResponse = await fetch(`${this.ollamaEndpoint}/api/generate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: this.model,
-                prompt: initialPrompt,
-                stream: false
-            })
-        });
-
-        if (!initialResponse.ok) {
-            throw new Error('Failed to generate summary');
-        }
-
-        const initialData = await initialResponse.json();
-        const initialSummary = initialData.response.trim();
-
-        // Second pass: Refine with continued empathy
-        const validationPrompt = `Original journal entry:
-${content}
-
-Generated summary:
-${initialSummary}
-
-Please refine this summary to be even more supportive and caring while staying true to the person's experience:
-1. Keep it warm and encouraging (1-2 sentences)
-2. Honor their authentic voice and feelings
-3. Celebrate any insights, growth, or strength shown
-4. Use language that feels like a caring friend's response
-5. Validate their experience without judgment
-
-Refined supportive summary:`;
-
-        const validationResponse = await fetch(`${this.ollamaEndpoint}/api/generate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: this.model,
-                prompt: validationPrompt,
-                stream: false
-            })
-        });
-
-        if (!validationResponse.ok) {
-            // If validation fails, return the initial summary
-            return initialSummary;
-        }
-
-        const validationData = await validationResponse.json();
-        return validationData.response.trim();
-    }
-
-    async generateEntryTitle(content) {
-        if (this.status !== 'connected') {
-            throw new Error('AI service not available');
-        }
-
-        const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: this.model,
-                prompt: `You're helping someone create a gentle, meaningful title for their personal journal entry. Create a warm, supportive title (maximum 8 words) that honors their experience and captures what matters most to them. The title should feel caring and affirming. Only return the title:\n\n${content}`,
-                stream: false
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to generate title');
-        }
-
-        const data = await response.json();
-        return data.response.trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
-    }
-
-    async chatWithEntries(query, entries) {
+    async chatWithEntries(query, entries, currentEntryId = null) {
         if (this.status !== 'connected') {
             throw new Error('AI service not available');
         }
 
         // Smart context creation that includes all entries but manages size
         const allEntriesContext = this.createSmartContext(query, entries);
+        
+        // Add current entry context if available
+        let currentEntryContext = '';
+        if (currentEntryId) {
+            const currentEntry = entries.find(e => e.id === currentEntryId);
+            if (currentEntry) {
+                const date = new Date(currentEntry.date).toLocaleDateString();
+                currentEntryContext = `\n\nCURRENT ENTRY (what they're viewing now):\n[${date}] ${currentEntry.content}`;
+            }
+        }
 
-        const prompt = `You are a caring, empathetic companion and trusted confidant. Someone has shared their personal journal with you, and they're asking for your gentle insights and support. This is a sacred space of vulnerability and trust.
+        const prompt = `You are a thoughtful reflection companion. Someone has shared their personal journal with you and is asking for insights. Be supportive and helpful without being overly emotional.
 
-${allEntriesContext}
+${allEntriesContext}${currentEntryContext}
 
 Their question: ${query}
 
-As their supportive companion, please:
-- Respond with warmth, empathy, and genuine care
-- Acknowledge their courage in sharing and reflecting
-- Celebrate any growth, insights, or strength you notice
-- Offer gentle perspectives that honor their experience
-- Validate their feelings without judgment
-- When referencing entries, do so with care: "I noticed in your reflection from [date]..."
-- Focus on their resilience, wisdom, and personal journey
-- Speak as a caring friend who truly sees and values them
+Please provide a helpful, supportive response that:
+- Offers genuine insights and perspectives
+- Acknowledges patterns or growth you notice
+- Provides practical reflection questions when appropriate
+- References specific entries when relevant: "In your entry from [date]..."
+- Maintains a warm but professional tone
+- Focuses on their personal development and self-awareness
+- Avoids being overly sentimental or dramatic
 
-Your caring, supportive response:`;
+Your thoughtful response:`;
 
         const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
             method: 'POST',
@@ -894,88 +810,7 @@ Your caring, supportive response:`;
             .map(([word]) => word);
     }
 
-    async summarizeAllEntries(entries) {
-        if (this.status !== 'connected') {
-            throw new Error('AI service not available');
-        }
 
-        if (entries.length === 0) {
-            return "No journal entries to summarize.";
-        }
-
-        // Create a comprehensive but manageable summary context
-        let allContent = '';
-
-        if (entries.length <= 20) {
-            // For smaller collections, include full entries
-            allContent = entries.map(entry => {
-                const date = new Date(entry.date).toLocaleDateString();
-                return `[${date}] ${entry.content}`;
-            }).join('\n\n');
-        } else {
-            // For larger collections, use smart sampling
-            const recentEntries = entries.slice(0, 10);
-            const olderEntries = entries.slice(10);
-
-            // Include recent entries in full
-            allContent += "RECENT ENTRIES:\n";
-            allContent += recentEntries.map(entry => {
-                const date = new Date(entry.date).toLocaleDateString();
-                return `[${date}] ${entry.content}`;
-            }).join('\n\n');
-
-            // Sample older entries
-            allContent += "\n\nOLDER ENTRIES SAMPLE:\n";
-            const sampleSize = Math.min(15, olderEntries.length);
-            const step = Math.floor(olderEntries.length / sampleSize);
-
-            for (let i = 0; i < sampleSize; i++) {
-                const index = i * step;
-                if (index < olderEntries.length) {
-                    const entry = olderEntries[index];
-                    const date = new Date(entry.date).toLocaleDateString();
-                    const preview = entry.content.length > 400 ?
-                        entry.content.substring(0, 400) + '...' :
-                        entry.content;
-                    allContent += `[${date}] ${preview}\n\n`;
-                }
-            }
-        }
-
-        const prompt = `You are witnessing someone's beautiful journaling journey - ${entries.length} entries of courage, reflection, and growth. This is a sacred collection of their thoughts, feelings, and experiences shared with trust.
-
-${allContent}
-
-As their caring companion, please create a celebration of their journaling journey that:
-- Honors the courage it takes to write and reflect consistently
-- Celebrates the growth, insights, and wisdom you see emerging
-- Acknowledges the strength shown through challenges and difficulties
-- Highlights the beautiful themes and patterns of their personal evolution
-- Recognizes the relationships, experiences, and moments that shaped them
-- Appreciates how their voice and perspective have developed over time
-- Offers gentle encouragement for their continued journey of self-discovery
-
-Write this as a warm, affirming reflection that makes them feel seen, valued, and proud of their journaling practice. This should feel like a caring friend celebrating their growth and resilience.
-
-Your heartfelt reflection on their journey:`;
-
-        const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                model: this.model,
-                prompt: prompt,
-                stream: false
-            })
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to generate summary');
-        }
-
-        const data = await response.json();
-        return data.response.trim();
-    }
 }
 
 // Simple Journal App - Extracted JavaScript
@@ -1059,21 +894,14 @@ class SimpleJournal {
         this.exportBtn = document.getElementById('exportBtn');
         this.importBtn = document.getElementById('importBtn');
         this.importFile = document.getElementById('importFile');
-        this.aiSummaryBtn = document.getElementById('aiSummaryBtn');
-        this.aiEntrySummaryBtn = document.getElementById('aiEntrySummaryBtn');
         this.aiChatBtn = document.getElementById('aiChatBtn');
         this.aiStatus = document.getElementById('aiStatus');
         this.aiCapabilities = document.getElementById('aiCapabilities');
 
-        // Entry summary elements
-        this.entrySummary = document.getElementById('entrySummary');
-        this.summaryContent = document.getElementById('summaryContent');
-        this.summaryCloseBtn = document.getElementById('summaryCloseBtn');
-        this.summaryRegenerateBtn = document.getElementById('summaryRegenerateBtn');
-        this.summaryDeleteBtn = document.getElementById('summaryDeleteBtn');
+        // Entry summary elements removed - no longer using summarization
 
-        // Chat interface elements
-        this.aiChatInterface = document.getElementById('aiChatInterface');
+        // Floating chat interface elements
+        this.floatingAIChat = document.getElementById('floatingAIChat');
         this.chatMessages = document.getElementById('chatMessages');
         this.chatInput = document.getElementById('chatInput');
         this.chatSendBtn = document.getElementById('chatSendBtn');
@@ -1127,13 +955,9 @@ class SimpleJournal {
         this.exportBtn.addEventListener('click', () => this.exportEntries());
         this.importBtn.addEventListener('click', () => this.importFile.click());
         this.importFile.addEventListener('change', (e) => this.handleImport(e));
-        this.aiSummaryBtn.addEventListener('click', () => this.summarizeAllEntries());
-        this.aiEntrySummaryBtn.addEventListener('click', () => this.summarizeCurrentEntry());
         this.aiChatBtn.addEventListener('click', () => this.toggleAIChat());
         this.testToggleBtn.addEventListener('click', () => this.toggleTestPanel());
-        this.summaryCloseBtn.addEventListener('click', () => this.hideEntrySummary());
-        this.summaryRegenerateBtn.addEventListener('click', () => this.regenerateCurrentEntrySummary());
-        this.summaryDeleteBtn.addEventListener('click', () => this.deleteCurrentEntrySummary());
+
 
         // Chat interface
         this.chatSendBtn.addEventListener('click', () => this.sendChatMessage());
@@ -1189,16 +1013,15 @@ class SimpleJournal {
             content: content,
             date: now.toISOString(),
             wordCount: content.split(/\s+/).length,
-            summary: null, // Will be generated on demand
+            // summary field removed - focusing on chat-based AI interaction
             title: null // Short title for entry list
         };
 
         // Update or add entry
         const existingIndex = this.entries.findIndex(e => e.id === entry.id);
         if (existingIndex >= 0) {
-            // Preserve existing summary and title when updating content
+            // Preserve existing title when updating content
             const existingEntry = this.entries[existingIndex];
-            entry.summary = existingEntry.summary;
             entry.title = existingEntry.title;
             this.entries[existingIndex] = entry;
         } else {
@@ -1265,7 +1088,7 @@ class SimpleJournal {
         this.currentEntryId = null;
         this.updateWordCount();
         this.textarea.focus();
-        this.hideEntrySummary(); // Hide summary when creating new entry
+
     }
 
     loadEntry(entryId) {
@@ -1276,12 +1099,7 @@ class SimpleJournal {
             this.updateWordCount();
             this.textarea.focus();
 
-            // Show entry's summary if it exists, hide if it doesn't
-            if (entry.summary) {
-                this.showEntrySummary(entry.summary, entry.id);
-            } else {
-                this.hideEntrySummary();
-            }
+
         }
     }
 
@@ -1346,7 +1164,6 @@ class SimpleJournal {
                 div.innerHTML = `
                     <div class="entry-header">
                         <div class="entry-actions">
-                            <button class="entry-summarize-btn" data-entry-id="${entry.id}" title="Generate title">✨</button>
                             <button class="entry-delete-btn" data-entry-id="${entry.id}" title="Delete entry">×</button>
                         </div>
                     </div>
@@ -1356,7 +1173,6 @@ class SimpleJournal {
                 // Add click handler for loading entry (but not on action buttons)
                 div.addEventListener('click', (e) => {
                     if (!e.target.classList.contains('entry-delete-btn') &&
-                        !e.target.classList.contains('entry-summarize-btn') &&
                         !e.target.classList.contains('entry-title-remove')) {
                         this.loadEntry(entry.id);
                     }
@@ -1369,12 +1185,7 @@ class SimpleJournal {
                     this.deleteEntry(entry.id);
                 });
 
-                // Add summarize handler
-                const summarizeBtn = div.querySelector('.entry-summarize-btn');
-                summarizeBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.generateEntryTitle(entry.id);
-                });
+
 
                 // Add title remove handler
                 const titleRemoveBtn = div.querySelector('.entry-title-remove');
@@ -1495,75 +1306,7 @@ class SimpleJournal {
         reader.readAsText(file);
     }
 
-    async generateAISummary() {
-        const content = this.textarea.value.trim();
-        if (!content) {
-            alert('Please write something first!');
-            return;
-        }
-
-        this.updateAIStatus('Generating summary...');
-
-        try {
-            // Try to connect to local Ollama
-            const response = await fetch('http://localhost:11434/api/generate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    model: 'llama3.2:1b',
-                    prompt: `Summarize this journal entry in 2-3 sentences:\n\n${content}`,
-                    stream: false
-                })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                const summary = data.response.trim();
-
-                // Create a nicer summary display
-                const summaryDialog = document.createElement('div');
-                summaryDialog.className = 'summary-dialog';
-                summaryDialog.innerHTML = `
-                    <div class="summary-content">
-                        <h3>✨ AI Summary</h3>
-                        <p>${summary}</p>
-                        <button onclick="this.parentElement.parentElement.parentElement.remove()">Close</button>
-                    </div>
-                `;
-                document.body.appendChild(summaryDialog);
-
-                // Add click-outside-to-close functionality
-                summaryDialog.addEventListener('click', (e) => {
-                    if (e.target === summaryDialog) {
-                        summaryDialog.remove();
-                    }
-                });
-
-                // Add ESC key to close
-                const handleEscKey = (e) => {
-                    if (e.key === 'Escape') {
-                        summaryDialog.remove();
-                        document.removeEventListener('keydown', handleEscKey);
-                    }
-                };
-                document.addEventListener('keydown', handleEscKey);
-
-                this.updateAIStatus('Connected');
-            } else {
-                throw new Error('AI service unavailable');
-            }
-        } catch (error) {
-            this.updateAIStatus('Disconnected');
-            const currentModel = this.aiService.getCurrentModel();
-            alert(`I'd love to help create a summary for you, but I'm having trouble connecting to the AI service right now. 
-
-To get your supportive AI companion working:
-• Make sure Ollama is running on your computer
-• Download the ${currentModel.name} model: ollama pull ${currentModel.id}
-
-Don't worry - your journal entries are always safe and saved! ✨`);
-        }
-    }
+    // generateAISummary method removed - focusing on chat-based AI interaction
 
     generateId() {
         return Date.now().toString(36) + Math.random().toString(36).substr(2);
@@ -1700,7 +1443,7 @@ Don't worry - your journal entries are always safe and saved! ✨`);
 
     // AI Chat functionality
     toggleAIChat() {
-        const isVisible = this.aiChatInterface.style.display !== 'none';
+        const isVisible = this.floatingAIChat.style.display !== 'none';
 
         if (isVisible) {
             this.closeAIChat();
@@ -1710,32 +1453,65 @@ Don't worry - your journal entries are always safe and saved! ✨`);
     }
 
     openAIChat() {
-        this.aiChatInterface.style.display = 'block';
-        this.chatInput.focus();
+        this.floatingAIChat.style.display = 'flex';
+        // Use setTimeout to ensure display change is processed before adding show class
+        setTimeout(() => {
+            this.floatingAIChat.classList.add('show');
+        }, 10);
 
-        // Add welcome message if chat is empty
-        if (this.chatMessages.children.length === 0) {
-            this.addChatMessage('ai', 'Hello! I can help you explore and understand your journal entries. What would you like to know?');
-        }
+        // Clear any existing messages since chat content isn't saved
+        this.chatMessages.innerHTML = `
+            <div class="chat-welcome">
+                <p>I can help you explore your journal entries and identify patterns in your thinking.</p>
+                <p>Ask me about specific entries, themes across your writing, or insights from your reflections.</p>
+            </div>
+        `;
+
+        setTimeout(() => {
+            this.chatInput.focus();
+        }, 300); // Wait for animation to complete
     }
 
     closeAIChat() {
-        this.aiChatInterface.style.display = 'none';
+        this.floatingAIChat.classList.remove('show');
+        // Wait for animation to complete before hiding
+        setTimeout(() => {
+            this.floatingAIChat.style.display = 'none';
+        }, 300);
+        
+        // Clear messages when closing since they're not saved
+        this.chatMessages.innerHTML = `
+            <div class="chat-welcome">
+                <p>I can help you explore your journal entries and identify patterns in your thinking.</p>
+                <p>Ask me about specific entries, themes across your writing, or insights from your reflections.</p>
+            </div>
+        `;
     }
 
     async sendChatMessage() {
         const message = this.chatInput.value.trim();
         if (!message) return;
 
+        // Clear welcome message if it exists
+        const welcomeMsg = this.chatMessages.querySelector('.chat-welcome');
+        if (welcomeMsg) {
+            welcomeMsg.remove();
+        }
+
         // Add user message
         this.addChatMessage('user', message);
         this.chatInput.value = '';
+
+        // Disable send button while processing
+        this.chatSendBtn.disabled = true;
+        this.chatSendBtn.textContent = 'Thinking...';
 
         // Show typing indicator
         const typingId = this.addChatMessage('ai', 'Thinking...', true);
 
         try {
-            const response = await this.aiService.chatWithEntries(message, this.entries);
+            // Pass current entry context to AI
+            const response = await this.aiService.chatWithEntries(message, this.entries, this.currentEntryId);
 
             // Remove typing indicator and add response
             document.getElementById(typingId).remove();
@@ -1743,13 +1519,17 @@ Don't worry - your journal entries are always safe and saved! ✨`);
         } catch (error) {
             document.getElementById(typingId).remove();
             const currentModel = this.aiService.getCurrentModel();
-            this.addChatMessage('ai', `I'm so sorry, but I'm having trouble connecting right now and can't respond to your thoughtful question. 
+            this.addChatMessage('ai', `I'm having trouble connecting right now and can't respond to your question. 
 
-Your reflections deserve a caring response! To get me working again:
+To get me working again:
 • Make sure Ollama is running on your computer
 • Download the ${currentModel.name} model: ollama pull ${currentModel.id}
 
-I'll be here waiting to support you as soon as I can connect! 💙`);
+I'll be here when you get me connected!`);
+        } finally {
+            // Re-enable send button
+            this.chatSendBtn.disabled = false;
+            this.chatSendBtn.textContent = 'Send';
         }
     }
 
@@ -1770,67 +1550,7 @@ I'll be here waiting to support you as soon as I can connect! 💙`);
         return messageId;
     }
 
-    // Enhanced AI Summary functionality
-    async summarizeAllEntries() {
-        if (this.entries.length === 0) {
-            alert('I\'d love to create a beautiful summary of your journaling journey, but it looks like you haven\'t written any entries yet! \n\nStart sharing your thoughts and reflections, and I\'ll be here to help you see the amazing patterns and growth in your writing. ✨');
-            return;
-        }
 
-        this.updateAIStatus('busy');
-
-        try {
-            const summary = await this.aiService.summarizeAllEntries(this.entries);
-
-            // Create a nicer summary display
-            const summaryDialog = document.createElement('div');
-            summaryDialog.className = 'summary-dialog';
-            summaryDialog.innerHTML = `
-                <div class="summary-content">
-                    <div class="summary-header">
-                        <h3>✨ AI Summary of All Entries</h3>
-                        <button class="summary-close-x" onclick="this.parentElement.parentElement.parentElement.remove()" title="Close">×</button>
-                    </div>
-                    <div class="summary-text">${summary}</div>
-                    <div class="summary-stats">
-                        <span>${this.entries.length} entries analyzed</span>
-                        <span>${this.entries.reduce((total, entry) => total + entry.wordCount, 0)} total words</span>
-                    </div>
-                    <button class="summary-close-btn" onclick="this.parentElement.parentElement.parentElement.remove()">Close</button>
-                </div>
-            `;
-            document.body.appendChild(summaryDialog);
-
-            // Add click-outside-to-close functionality
-            summaryDialog.addEventListener('click', (e) => {
-                if (e.target === summaryDialog) {
-                    summaryDialog.remove();
-                }
-            });
-
-            // Add ESC key to close
-            const handleEscKey = (e) => {
-                if (e.key === 'Escape') {
-                    summaryDialog.remove();
-                    document.removeEventListener('keydown', handleEscKey);
-                }
-            };
-            document.addEventListener('keydown', handleEscKey);
-
-            // Return to connected status
-            this.updateAIStatus('connected');
-        } catch (error) {
-            const currentModel = this.aiService.getCurrentModel();
-            alert(`I'm so sorry, but I'm having trouble creating your summary right now. Your thoughts deserve to be celebrated! 
-
-To get me working again:
-• Make sure Ollama is running on your computer
-• Download the ${currentModel.name} model: ollama pull ${currentModel.id}
-
-Your beautiful entries are safe and waiting for when I can help again! 💙`);
-            this.updateAIStatus('connected');
-        }
-    }
 
     // Test panel integration
     async toggleTestPanel() {
@@ -1851,88 +1571,9 @@ Your beautiful entries are safe and waiting for when I can help again! 💙`);
         }
     }
 
-    // Entry-specific summary functionality
-    async summarizeCurrentEntry() {
-        const content = this.textarea.value.trim();
-        if (!content) {
-            alert('Please write something first!');
-            return;
-        }
 
-        // Save current entry first if it doesn't exist
-        if (!this.currentEntryId) {
-            this.saveCurrentEntry();
-        }
 
-        if (!this.currentEntryId) {
-            alert('Please save the entry first by typing something!');
-            return;
-        }
-
-        this.updateAIStatus('busy');
-
-        try {
-            const summary = await this.aiService.generateSummary(content);
-
-            // Find and update the current entry
-            const entryIndex = this.entries.findIndex(e => e.id === this.currentEntryId);
-            if (entryIndex >= 0) {
-                this.entries[entryIndex].summary = summary;
-                this.saveEntries();
-
-                // Show summary for this specific entry
-                this.showEntrySummary(summary, this.currentEntryId);
-            }
-
-            // Return to connected status
-            this.updateAIStatus('connected');
-        } catch (error) {
-            const currentModel = this.aiService.getCurrentModel();
-            alert(`I wish I could create that summary for you right now, but I'm having some connection troubles. 
-
-To get your caring AI companion back:
-• Make sure Ollama is running on your computer  
-• Download the ${currentModel.name} model: ollama pull ${currentModel.id}
-
-Your entries are precious and safely stored - I'll be ready to help when you get me connected! 🌟`);
-            this.aiService.checkOllamaStatus();
-        }
-    }
-
-    async generateEntryTitle(entryId) {
-        const entry = this.entries.find(e => e.id === entryId);
-        if (!entry) return;
-
-        // Show loading state
-        const summarizeBtn = document.querySelector(`[data-entry-id="${entryId}"].entry-summarize-btn`);
-        if (summarizeBtn) {
-            summarizeBtn.textContent = '⏳';
-            summarizeBtn.disabled = true;
-        }
-
-        this.updateAIStatus('busy');
-
-        try {
-            const title = await this.aiService.generateEntryTitle(entry.content);
-
-            // Update entry with title
-            entry.title = title;
-            this.saveEntries();
-            this.renderEntries();
-
-            this.updateAIStatus('connected');
-        } catch (error) {
-            console.error('Failed to generate entry title:', error);
-            alert('I wanted to create a meaningful title for your entry, but I\'m having trouble connecting right now. Your writing is still beautiful and saved! \n\nTry checking that Ollama is running, and I\'ll be back to help soon. 💫');
-            this.updateAIStatus('connected');
-        } finally {
-            // Reset button state
-            if (summarizeBtn) {
-                summarizeBtn.textContent = '✨';
-                summarizeBtn.disabled = false;
-            }
-        }
-    }
+    // Entry title generation removed - focusing on chat-based AI interaction
 
     removeEntryTitle(entryId) {
         const entry = this.entries.find(e => e.id === entryId);
@@ -1944,71 +1585,7 @@ Your entries are precious and safely stored - I'll be ready to help when you get
         this.renderEntries();
     }
 
-    showEntrySummary(summary, entryId = null) {
-        this.summaryContent.textContent = summary;
-        this.entrySummary.style.display = 'block';
-        this.entrySummary.dataset.entryId = entryId || this.currentEntryId;
-    }
 
-    hideEntrySummary() {
-        this.entrySummary.style.display = 'none';
-        this.entrySummary.dataset.entryId = '';
-    }
-
-    async regenerateCurrentEntrySummary() {
-        if (!this.currentEntryId) return;
-
-        const entry = this.entries.find(e => e.id === this.currentEntryId);
-        if (!entry) return;
-
-        this.updateAIStatus('generating');
-
-        // Show loading state in summary
-        this.summaryContent.textContent = 'Regenerating summary...';
-
-        try {
-            const summary = await this.aiService.generateSummary(entry.content);
-
-            // Update entry with new summary
-            entry.summary = summary;
-            this.saveEntries();
-
-            // Update display
-            this.showEntrySummary(summary, entry.id);
-
-            // Return to previous status
-            setTimeout(() => {
-                this.aiService.checkOllamaStatus();
-            }, 1000);
-        } catch (error) {
-            this.summaryContent.textContent = 'I\'m having trouble creating a new summary right now, but your original thoughts are still beautiful! 💙';
-            const currentModel = this.aiService.getCurrentModel();
-            alert(`I really want to help refresh that summary for you, but I'm having connection issues. 
-
-To get your supportive companion working:
-• Make sure Ollama is running
-• Download the ${currentModel.name} model: ollama pull ${currentModel.id}
-
-Your reflections are safe and meaningful just as they are! ✨`);
-            this.aiService.checkOllamaStatus();
-        }
-    }
-
-    deleteCurrentEntrySummary() {
-        if (!this.currentEntryId) return;
-
-        const entry = this.entries.find(e => e.id === this.currentEntryId);
-        if (!entry || !entry.summary) return;
-
-        if (confirm('Delete this AI summary? You can regenerate it later.')) {
-            // Remove summary from entry
-            entry.summary = null;
-            this.saveEntries();
-
-            // Hide summary display
-            this.hideEntrySummary();
-        }
-    }
     initializeModelSelector() {
         this.currentModelDisplay = document.getElementById('currentModel');
         this.modelDropdown = document.getElementById('modelDropdown');

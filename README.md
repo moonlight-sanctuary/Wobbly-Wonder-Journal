@@ -15,7 +15,7 @@ If you enjoyed using this app, please drop a star on the repo. I made it super p
 
 ### ✨ **What Makes Wobbly Wonders Special**
 
-- 🔒 **Complete Privacy** - Your thoughts stay on your device, never shared or tracked ( I cannot emphasise enough that don't want your data, my data is already too much for me to organize ¯\_(ツ)_/¯ )
+- 🔒 **Complete Privacy** - Your thoughts stay on your device, never shared or tracked ( I cannot emphasise enough that don't want your data, my data is already too much for me to organize `¯\_(ツ)_/¯` )
 - 🤗 **Empathetic AI Companion** - An AI that responds with genuine care, validation, and support
 - 🎨 **Beautiful Themes** - Warm, cool, and minimal themes that adapt to your mood with light and dark mode
 - 🚀 **Zero Setup** - Open and start writing immediately, no accounts or configuration
@@ -159,6 +159,12 @@ Wobbly Wonders includes a comprehensive test suite with 40+ automated tests cove
 ## 📄 License
 
 MIT License - Use freely, modify as needed, share the love! ❤️
+
+## Future Feature Potential 
+- Google Drive/Dropbox/One Drive integration with support for auto-backup
+- Reflection prompt support
+- Persistent AI chats
+- Open to ideas!
 
 ---
 
