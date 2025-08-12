@@ -2,6 +2,11 @@
 
 > A beautiful, empathetic journaling application that creates a safe space for your thoughts and reflections. Completely private, runs entirely in your browser, with an optional AI companion that truly cares about your journey.
 
+[![This helped me](https://hits.sh/github.com/moonlight-sanctuary/Wobbly-Wonder-Journal.svg?label=This%20helped%20me&color=brightgreen&style=flat-square)](https://hits.sh/github.com/yourusername/yourrepo)
+
+If you enjoyed using this app, please drop a star on the repo. I made it super private (i.e. there are no external integrations, signins, or even http requests that go out from the app) so I have no idea if its even being used. If you like it, drop a star so I can see. Or hit the button above. Or both?
+
+
 ## 🌟 Why Reflect?
 
 **Reflect** isn't just another note-taking app. It's designed to be your caring companion on your personal growth journey. Whether you're processing daily experiences, exploring your emotions, or celebrating your wins, Reflect provides a warm, supportive environment that encourages authentic self-expression.
