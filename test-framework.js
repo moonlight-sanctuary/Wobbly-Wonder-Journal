@@ -798,6 +798,54 @@ function setupCoreTests() {
         };
     }, 'ai-chat');
 
+    tf.addTest('Reflection Entry Creation', async () => {
+        const app = window.journal;
+        const createReflectionBtn = document.getElementById('createReflectionBtn');
+        const chatActions = document.getElementById('chatActions');
+        
+        // Set up test scenario
+        app.lastAIResponse = 'Test AI response for reflection';
+        
+        // Test reflection entry creation
+        const initialEntryCount = app.entries.length;
+        app.createReflectionEntry();
+        const newEntryCount = app.entries.length;
+        
+        // Check if new entry was created and contains reflection prompt
+        const hasNewEntry = newEntryCount > initialEntryCount;
+        const textareaContent = app.textarea.value;
+        const hasReflectionContent = textareaContent.includes('💭 Reflection on AI Insights:') && 
+                                   textareaContent.includes('Test AI response for reflection');
+        
+        return {
+            passed: createReflectionBtn && chatActions && hasNewEntry && hasReflectionContent,
+            message: (createReflectionBtn && chatActions && hasNewEntry && hasReflectionContent) ? 
+                    'Reflection entry creation working' : 'Reflection entry creation failed'
+        };
+    }, 'ai-chat');
+
+    tf.addTest('AI Message Paragraph Formatting', async () => {
+        const app = window.journal;
+        
+        // Test AI message with multiple paragraphs
+        const testContent = 'First paragraph with some text.\n\nSecond paragraph with more text.\n\nThird paragraph for testing.';
+        const messageId = app.addChatMessage('ai', testContent);
+        
+        // Check if message was created and contains proper paragraph formatting
+        const messageElement = document.getElementById(messageId);
+        const messageContent = messageElement.querySelector('.message-content');
+        const hasParagraphs = messageContent.querySelectorAll('p').length === 3;
+        const hasProperSpacing = messageContent.innerHTML.includes('<p>First paragraph') && 
+                                messageContent.innerHTML.includes('<p>Second paragraph') &&
+                                messageContent.innerHTML.includes('<p>Third paragraph');
+        
+        return {
+            passed: messageElement && hasParagraphs && hasProperSpacing,
+            message: (messageElement && hasParagraphs && hasProperSpacing) ? 
+                    'AI message paragraph formatting working' : 'AI message paragraph formatting failed'
+        };
+    }, 'ai-chat');
+
     tf.addTest('Mobile Responsiveness Check', async () => {
         const welcomeContent = document.querySelector('.welcome-content');
         const floatingBtn = document.getElementById('floatingNewBtn');
