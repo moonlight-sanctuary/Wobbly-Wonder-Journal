@@ -37,7 +37,7 @@ class SidebarManager {
             e.preventDefault();
             this.toggleSidebar('right');
         });
-        
+
         console.log('Event listeners attached to sidebar toggles');
     }
 
@@ -53,7 +53,7 @@ class SidebarManager {
 
     openSidebar(side) {
         console.log(`Opening ${side} sidebar`);
-        
+
         // Close the other sidebar if it's open
         if (this.currentSidebar && this.currentSidebar !== side) {
             this.closeSidebar(this.currentSidebar);
@@ -62,7 +62,7 @@ class SidebarManager {
         // Open the requested sidebar
         document.body.classList.add(`${side}-open`);
         this.currentSidebar = side;
-        
+
         console.log(`Body classes after opening ${side}:`, document.body.className);
 
         // Update toggle button states
@@ -647,7 +647,7 @@ class AIService {
 
         // Smart context creation that includes all entries but manages size
         const allEntriesContext = this.createSmartContext(query, entries);
-        
+
         // Add current entry context if available
         let currentEntryContext = '';
         if (currentEntryId) {
@@ -658,22 +658,29 @@ class AIService {
             }
         }
 
-        const prompt = `You are a thoughtful reflection companion. Someone has shared their personal journal with you and is asking for insights. Be supportive and helpful without being overly emotional.
+        const prompt = `You are a reflection companion helping someone explore their journal entries. Be supportive but not overly empathetic. Focus on practical insights and healthy reflection.
 
 ${allEntriesContext}${currentEntryContext}
 
 Their question: ${query}
 
-Please provide a helpful, supportive response that:
-- Offers genuine insights and perspectives
-- Acknowledges patterns or growth you notice
-- Provides practical reflection questions when appropriate
-- References specific entries when relevant: "In your entry from [date]..."
-- Maintains a warm but professional tone
-- Focuses on their personal development and self-awareness
-- Avoids being overly sentimental or dramatic
+RESPONSE STRUCTURE (follow exactly):
+1. ACKNOWLEDGE (1-2 sentences): Mirror their question/desire to reflect
+2. OBSERVE (2-3 sentences): Brief summary of what you notice in their entries
+3. ANSWER (2-3 sentences): Direct response to their specific question
+4. INSIGHT (2-3 sentences): Additional perspective or pattern you notice
+5. REFLECT (1-2 sentences): Ask them to consider the insights provided
 
-Your thoughtful response:`;
+IMPORTANT GUIDELINES:
+- Write in short paragraphs (2-3 sentences max)
+- Reference specific entries: "In your [date] entry..."
+- If negative emotions detected: acknowledge briefly, then redirect to positive actions
+- For harmful thoughts: encourage external support (trusted friend, family, professional help)
+- Suggest healthy activities: going outside, talking to someone, doing something enjoyable
+- Stay supportive but professional, not overly emotional
+- Focus on growth and self-awareness
+
+Your structured response:`;
 
         const response = await fetch(`${this.ollamaEndpoint}/api/generate`, {
             method: 'POST',
@@ -872,14 +879,14 @@ class SimpleJournal {
         setTimeout(() => {
             this.leftToggle = document.getElementById('leftToggle');
             this.rightToggle = document.getElementById('rightToggle');
-            
+
             console.log('Fresh element lookup:', {
                 leftToggle: this.leftToggle,
                 rightToggle: this.rightToggle,
                 leftToggleId: this.leftToggle?.id,
                 rightToggleId: this.rightToggle?.id
             });
-            
+
             if (this.leftToggle && this.rightToggle) {
                 this.sidebarManager = new SidebarManager(this.leftToggle, this.rightToggle);
                 console.log('SidebarManager created successfully:', this.sidebarManager);
@@ -906,6 +913,8 @@ class SimpleJournal {
         this.chatInput = document.getElementById('chatInput');
         this.chatSendBtn = document.getElementById('chatSendBtn');
         this.chatCloseBtn = document.getElementById('chatCloseBtn');
+        this.chatActions = document.getElementById('chatActions');
+        this.createReflectionBtn = document.getElementById('createReflectionBtn');
 
         // Test panel button
         this.testToggleBtn = document.getElementById('testToggleBtn');
@@ -962,6 +971,7 @@ class SimpleJournal {
         // Chat interface
         this.chatSendBtn.addEventListener('click', () => this.sendChatMessage());
         this.chatCloseBtn.addEventListener('click', () => this.closeAIChat());
+        this.createReflectionBtn.addEventListener('click', () => this.createReflectionEntry());
         this.chatInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 this.sendChatMessage();
@@ -1467,6 +1477,10 @@ class SimpleJournal {
             </div>
         `;
 
+        // Hide action button when opening
+        this.chatActions.style.display = 'none';
+        this.lastAIResponse = null;
+
         setTimeout(() => {
             this.chatInput.focus();
         }, 300); // Wait for animation to complete
@@ -1478,7 +1492,7 @@ class SimpleJournal {
         setTimeout(() => {
             this.floatingAIChat.style.display = 'none';
         }, 300);
-        
+
         // Clear messages when closing since they're not saved
         this.chatMessages.innerHTML = `
             <div class="chat-welcome">
@@ -1516,6 +1530,12 @@ class SimpleJournal {
             // Remove typing indicator and add response
             document.getElementById(typingId).remove();
             this.addChatMessage('ai', response);
+
+            // Store last AI response for reflection entry
+            this.lastAIResponse = response;
+
+            // Show action button after AI response
+            this.chatActions.style.display = 'block';
         } catch (error) {
             document.getElementById(typingId).remove();
             const currentModel = this.aiService.getCurrentModel();
@@ -1539,8 +1559,25 @@ I'll be here when you get me connected!`);
         messageDiv.id = messageId;
         messageDiv.className = `chat-message ${sender}-message ${isTyping ? 'typing' : ''}`;
 
+        // Format content with better paragraph spacing for AI messages
+        let formattedContent = content;
+        if (sender === 'ai' && !isTyping) {
+            // Split content into paragraphs and wrap each in a <p> tag for better spacing
+            const paragraphs = content
+                .split(/\n\s*\n/) // Split on double line breaks (with optional whitespace)
+                .filter(p => p.trim()) // Remove empty paragraphs
+                .map(p => p.replace(/\n/g, '<br>')) // Convert single line breaks to <br>
+                .map(p => `<p>${p.trim()}</p>`) // Wrap each paragraph in <p> tags
+                .join('');
+
+            formattedContent = paragraphs;
+        } else {
+            // For user messages, just convert line breaks to <br>
+            formattedContent = content.replace(/\n/g, '<br>');
+        }
+
         messageDiv.innerHTML = `
-            <div class="message-content">${content}</div>
+            <div class="message-content">${formattedContent}</div>
             <div class="message-time">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
         `;
 
@@ -1550,7 +1587,35 @@ I'll be here when you get me connected!`);
         return messageId;
     }
 
+    createReflectionEntry() {
+        if (!this.lastAIResponse) return;
 
+        // Close the AI chat
+        this.closeAIChat();
+
+        // Create a new entry with the AI response as a starting point
+        this.newEntry();
+
+        // Add the AI response and reflection prompt to the textarea
+        const reflectionPrompt = `💭 Reflection on AI Insights:
+
+"${this.lastAIResponse}"
+
+---
+
+What do I think about these insights? How do they resonate with my experience? What actions might I take based on this reflection?
+
+`;
+
+        this.textarea.value = reflectionPrompt;
+        this.textarea.focus();
+
+        // Position cursor at the end
+        this.textarea.setSelectionRange(reflectionPrompt.length, reflectionPrompt.length);
+
+        // Trigger auto-save
+        this.handleInput();
+    }
 
     // Test panel integration
     async toggleTestPanel() {
@@ -1724,16 +1789,16 @@ I'll be here when you get me connected!`);
 // Initialize the app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.journal = new SimpleJournal();
-    
+
     // Add debugging function to window for manual testing
-    window.testSidebar = function() {
+    window.testSidebar = function () {
         console.log('=== SIDEBAR DEBUG TEST ===');
         console.log('Journal app:', window.journal);
         console.log('SidebarManager:', window.journal?.sidebarManager);
         console.log('Left toggle:', document.getElementById('leftToggle'));
         console.log('Right toggle:', document.getElementById('rightToggle'));
         console.log('Body classes:', document.body.className);
-        
+
         // Try to manually toggle
         if (window.journal?.sidebarManager) {
             console.log('Attempting to open left sidebar...');
