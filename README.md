@@ -1,7 +1,9 @@
 # ✨ Wobbly Wonders - Your Personal Space
 
 > A beautiful, empathetic journaling application that creates a safe space for your thoughts and reflections.
-> Completely private, runs entirely in your browser, with an optional local AI companion that truly cares and is there to help you along on your (often wobbly but always wonderful) journey.
+> 
+> Completely private, runs entirely in your browser, with an optional local AI companion that truly cares and
+> is there to help you along on your (often wobbly but always wonderful) journey.
 
 [![Views](https://hits.sh/github.com/moonlight-sanctuary/Wobbly-Wonder-Journal.svg?label=Views&color=brightgreen&style=flat-square)](https://hits.sh/github.com/moonlight-sanctuary/Wobbly-Wonder-Journal)
 
