@@ -1,16 +1,16 @@
-# ✨ Reflect - Your Personal Journaling Companion
+# ✨ Wobbly Wonders - Your Personal Journaling Companion
 
-> A beautiful, empathetic journaling application that creates a safe space for your thoughts and reflections. Completely private, runs entirely in your browser, with an optional AI companion that truly cares about your journey.
+> A beautiful, empathetic journaling application that creates a safe space for your thoughts and reflections. Completely private, runs entirely in your browser, with an optional AI companion that truly cares about your (often wobbly but always wonderful) journey.
 
 [![Views](https://hits.sh/github.com/moonlight-sanctuary/Wobbly-Wonder-Journal.svg?label=Views&color=brightgreen&style=flat-square)](https://hits.sh/github.com/moonlight-sanctuary/Wobbly-Wonder-Journal)
 
 If you enjoyed using this app, please drop a star on the repo. I made it super private (i.e. there are no external integrations, sign-ins, not even any http requests that go out from the app). If you like it, drop a star so I can see. Or hit the button above. Or both?
 
-## 🌟 Why Reflect?
+## 🌟 Why Wobbly Wonders?
 
-**Reflect** isn't just another note-taking app. Its simple and tailor made to not be distracting, to be pleasant looking, and to just work. Whether you're processing daily experiences, exploring your emotions, or celebrating your wins, Reflect provides a warm, supportive environment that encourages honest, self-expression and gives you your own space. Use it on any device, anywhere with or without an internet connection. 
+**Wobbly Wonders** isn't just another note-taking app. Its simple and tailor made to not be distracting, to be pleasant looking, and to just work. Whether you're processing daily experiences, exploring your emotions, or celebrating your wins, Wobbly Wonders provides a warm, supportive environment that encourages honest, self-expression and gives you your own space. Use it on any device, anywhere with or without an internet connection. 
 
-### ✨ **What Makes Reflect Special**
+### ✨ **What Makes Wobbly Wonders Special**
 
 - 🔒 **Complete Privacy** - Your thoughts stay on your device, never shared or tracked ( I cannot emphasise enough that don't want your data, my data is already too much for me to organize ¯\_(ツ)_/¯ )
 - 🤗 **Empathetic AI Companion** - An AI that responds with genuine care, validation, and support
@@ -97,7 +97,7 @@ Best for distraction-free writing, meditation, or when you want pure simplicity.
 
 Each theme automatically supports light and dark modes, ensuring comfort at any time of day.
 
-## 📱 How to Use Reflect locally
+## 📱 How to Use Wobbly Wonders locally
 
 ### **Getting Started**
 1. Open `index.html` in any modern browser
@@ -112,7 +112,7 @@ Each theme automatically supports light and dark modes, ensuring comfort at any 
 
 ## 🔒 Privacy & Security
 
-**Your privacy is sacred.** Reflect is designed with privacy-first principles:
+**Your privacy is sacred.** Wobbly Wonders is designed with privacy-first principles:
 
 - **Local-only storage** - All data stays in your browser. Don't clear your browser cache without exporting!
 - **No external servers** - No data ever leaves your device, don't forget to back up your journal!
@@ -136,7 +136,7 @@ Each theme automatically supports light and dark modes, ensuring comfort at any 
 - **Deploy your own instance** by taking the app.js, index.html, and the styles.css to any static hosting provider (ex: Github Pages/Netlify/Vercel/Hostinger)
 
 ### **Offline Use**
-Reflect works completely offline once loaded - perfect for:
+Wobbly Wonders works completely offline once loaded - perfect for:
 - ✈️ Travel journaling
 - 🏕️ Remote locations
 - 🔒 Maximum privacy
@@ -144,7 +144,7 @@ Reflect works completely offline once loaded - perfect for:
 
 ## 🧪 Quality & Testing
 
-Reflect includes a comprehensive test suite with 40+ automated tests covering:
+Wobbly Wonders includes a comprehensive test suite with 40+ automated tests covering:
 
 - ✅ **Core functionality** - Writing, saving, loading entries
 - ✅ **AI features** - Model management, summaries, chat
