@@ -846,6 +846,259 @@ function setupCoreTests() {
         };
     }, 'ai-chat');
 
+    tf.addTest('Privacy-Safe Analytics Integration', async () => {
+        const app = window.journal;
+        const analytics = app.analytics;
+        
+        // Check if analytics is properly initialized
+        const analyticsExists = analytics !== undefined;
+        const hasTrackingMethods = typeof analytics.trackFeatureUse === 'function' &&
+                                  typeof analytics.trackUIInteraction === 'function' &&
+                                  typeof analytics.trackThemeChange === 'function' &&
+                                  typeof analytics.trackAIStatus === 'function';
+        
+        // Test that gtag is available (or analytics is disabled gracefully)
+        const gtagAvailable = typeof gtag !== 'undefined' || !analytics.enabled;
+        
+        return {
+            passed: analyticsExists && hasTrackingMethods && gtagAvailable,
+            message: (analyticsExists && hasTrackingMethods && gtagAvailable) ? 
+                    'Privacy-safe analytics properly integrated' : 'Analytics integration failed'
+        };
+    }, 'privacy-analytics');
+
+    tf.addTest('Analytics Content Privacy Protection', async () => {
+        const app = window.journal;
+        
+        // Mock gtag to capture what data is being sent
+        const originalGtag = window.gtag;
+        const capturedEvents = [];
+        
+        window.gtag = function(...args) {
+            capturedEvents.push(args);
+        };
+        
+        // Test various user actions that should NOT leak content
+        const testContent = 'SENSITIVE_JOURNAL_CONTENT_SHOULD_NOT_BE_TRACKED';
+        const testChatMessage = 'PRIVATE_CHAT_MESSAGE_SHOULD_NOT_BE_TRACKED';
+        
+        // Simulate user writing in journal
+        app.textarea.value = testContent;
+        app.handleInput();
+        
+        // Simulate new entry creation
+        app.newEntry();
+        
+        // Simulate AI chat interaction
+        app.openAIChat();
+        app.lastAIResponse = testChatMessage;
+        app.createReflectionEntry();
+        
+        // Simulate theme change
+        app.themeManager.setTheme('cool', 'dark');
+        
+        // Check that no captured events contain sensitive content
+        const hasContentLeakage = capturedEvents.some(event => {
+            const eventString = JSON.stringify(event);
+            return eventString.includes(testContent) || 
+                   eventString.includes(testChatMessage) ||
+                   eventString.includes('SENSITIVE') ||
+                   eventString.includes('PRIVATE');
+        });
+        
+        // Restore original gtag
+        window.gtag = originalGtag;
+        
+        return {
+            passed: !hasContentLeakage && capturedEvents.length > 0,
+            message: hasContentLeakage ? 
+                    'CRITICAL: Content leakage detected in analytics!' : 
+                    `Content privacy protected - ${capturedEvents.length} safe events tracked`
+        };
+    }, 'privacy-analytics');
+
+    tf.addTest('Analytics Event Structure Validation', async () => {
+        const app = window.journal;
+        
+        // Mock gtag to validate event structure
+        const originalGtag = window.gtag;
+        const capturedEvents = [];
+        
+        window.gtag = function(...args) {
+            capturedEvents.push(args);
+        };
+        
+        // Test each analytics method
+        app.analytics.trackFeatureUse('test_feature', 'test_action');
+        app.analytics.trackUIInteraction('test_element', 'click');
+        app.analytics.trackThemeChange('warm', 'light');
+        app.analytics.trackAIStatus('connected');
+        
+        // Validate event structure
+        const validEvents = capturedEvents.filter(event => {
+            if (event[0] !== 'event') return false;
+            
+            const eventData = event[2];
+            if (!eventData) return false;
+            
+            // Check for required safe fields only
+            const hasRequiredFields = eventData.event_category && 
+                                     eventData.event_label !== undefined;
+            
+            // Check for forbidden fields that could leak content
+            const hasForbiddenFields = eventData.content || 
+                                      eventData.text || 
+                                      eventData.message || 
+                                      eventData.entry_content ||
+                                      eventData.chat_message;
+            
+            return hasRequiredFields && !hasForbiddenFields;
+        });
+        
+        // Restore original gtag
+        window.gtag = originalGtag;
+        
+        return {
+            passed: validEvents.length === capturedEvents.length && capturedEvents.length > 0,
+            message: validEvents.length === capturedEvents.length ? 
+                    `All ${capturedEvents.length} events have safe structure` : 
+                    `${capturedEvents.length - validEvents.length} events have unsafe structure`
+        };
+    }, 'privacy-analytics');
+
+    tf.addTest('Analytics Graceful Degradation', async () => {
+        const app = window.journal;
+        
+        // Test analytics behavior when gtag is unavailable
+        const originalGtag = window.gtag;
+        delete window.gtag;
+        
+        // Create new analytics instance without gtag
+        const testAnalytics = new PrivacyAnalytics();
+        
+        // Test that methods don't throw errors
+        let errorsThrown = 0;
+        try {
+            testAnalytics.trackFeatureUse('test_feature');
+            testAnalytics.trackUIInteraction('test_element');
+            testAnalytics.trackThemeChange('warm', 'light');
+            testAnalytics.trackAIStatus('connected');
+        } catch (error) {
+            errorsThrown++;
+        }
+        
+        // Restore gtag
+        window.gtag = originalGtag;
+        
+        return {
+            passed: errorsThrown === 0 && !testAnalytics.enabled,
+            message: errorsThrown === 0 ? 
+                    'Analytics gracefully handles missing gtag' : 
+                    `${errorsThrown} errors thrown when gtag unavailable`
+        };
+    }, 'privacy-analytics');
+
+    tf.addTest('Analytics Never Accesses Sensitive Data Sources', async () => {
+        const app = window.journal;
+        
+        // Mock gtag to capture all data being sent
+        const originalGtag = window.gtag;
+        const capturedData = [];
+        
+        window.gtag = function(...args) {
+            // Capture all arguments and stringify to check for sensitive data
+            capturedData.push(JSON.stringify(args));
+        };
+        
+        // Add sensitive data to various sources
+        const sensitiveContent = 'TOP_SECRET_JOURNAL_ENTRY_CONTENT';
+        const sensitiveChat = 'PRIVATE_AI_CONVERSATION_DATA';
+        
+        // Populate localStorage with sensitive data
+        localStorage.setItem('journalEntries', JSON.stringify([{
+            id: 'test',
+            content: sensitiveContent,
+            date: new Date().toISOString()
+        }]));
+        
+        // Populate textarea with sensitive data
+        app.textarea.value = sensitiveContent;
+        
+        // Populate chat with sensitive data
+        app.lastAIResponse = sensitiveChat;
+        
+        // Trigger various analytics events
+        app.analytics.trackFeatureUse('journal_write', 'started');
+        app.analytics.trackUIInteraction('textarea', 'focus');
+        app.analytics.trackFeatureUse('ai_chat', 'opened');
+        app.analytics.trackFeatureUse('reflection_entry', 'created');
+        
+        // Check that no sensitive data was transmitted
+        const allCapturedData = capturedData.join(' ');
+        const hasSensitiveData = allCapturedData.includes(sensitiveContent) ||
+                                allCapturedData.includes(sensitiveChat) ||
+                                allCapturedData.includes('TOP_SECRET') ||
+                                allCapturedData.includes('PRIVATE_AI');
+        
+        // Clean up
+        localStorage.removeItem('journalEntries');
+        app.textarea.value = '';
+        app.lastAIResponse = null;
+        window.gtag = originalGtag;
+        
+        return {
+            passed: !hasSensitiveData && capturedData.length > 0,
+            message: hasSensitiveData ? 
+                    'CRITICAL: Analytics accessed sensitive data sources!' : 
+                    `Privacy protected - ${capturedData.length} events sent without sensitive data`
+        };
+    }, 'privacy-analytics');
+
+    tf.addTest('Analytics Configuration Privacy Settings', async () => {
+        // This test validates that Google Analytics is configured with privacy-first settings
+        // We can't directly test the gtag config, but we can verify our implementation
+        
+        const app = window.journal;
+        const analytics = app.analytics;
+        
+        // Check that analytics class has privacy-conscious design
+        const hasPrivacyMethods = typeof analytics.trackFeatureUse === 'function' &&
+                                 typeof analytics.trackUIInteraction === 'function';
+        
+        // Verify analytics doesn't store references to sensitive data
+        const hasNoSensitiveRefs = !analytics.hasOwnProperty('entries') &&
+                                  !analytics.hasOwnProperty('textarea') &&
+                                  !analytics.hasOwnProperty('chatMessages') &&
+                                  !analytics.hasOwnProperty('localStorage');
+        
+        // Check that analytics methods don't accept content parameters
+        let contentParameterFound = false;
+        try {
+            // These should work (safe parameters)
+            analytics.trackFeatureUse('test');
+            analytics.trackUIInteraction('button');
+            
+            // The methods should not have parameters for content
+            const trackFeatureUseStr = analytics.trackFeatureUse.toString();
+            const trackUIInteractionStr = analytics.trackUIInteraction.toString();
+            
+            // Look for any content-related parameters in method signatures
+            contentParameterFound = trackFeatureUseStr.includes('content') ||
+                                   trackFeatureUseStr.includes('text') ||
+                                   trackUIInteractionStr.includes('content') ||
+                                   trackUIInteractionStr.includes('text');
+        } catch (error) {
+            // Methods should not throw errors with safe parameters
+        }
+        
+        return {
+            passed: hasPrivacyMethods && hasNoSensitiveRefs && !contentParameterFound,
+            message: (hasPrivacyMethods && hasNoSensitiveRefs && !contentParameterFound) ? 
+                    'Analytics class designed with privacy-first principles' : 
+                    'Analytics class may have privacy vulnerabilities'
+        };
+    }, 'privacy-analytics');
+
     tf.addTest('Mobile Responsiveness Check', async () => {
         const welcomeContent = document.querySelector('.welcome-content');
         const floatingBtn = document.getElementById('floatingNewBtn');
@@ -871,8 +1124,7 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(setupCoreTests, 1000);
 }
-// ==
-=== COMPREHENSIVE FEATURE TESTS =====
+// === COMPREHENSIVE FEATURE TESTS =====
 
 // Theme System Tests
 tf.addTest(() => {
