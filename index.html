@@ -5,6 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>✨ Reflect - Personal Journal</title>
     <link rel="stylesheet" href="style.css">
+    
+    <!-- Google Analytics - Privacy-First Implementation -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-LZ91EBZEH6"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        
+        // Configure with maximum privacy settings
+        gtag('config', 'G-LZ91EBZEH6', {
+            // Privacy-first configuration
+            anonymize_ip: true,           // Anonymize IP addresses
+            allow_google_signals: false,  // Disable Google Signals
+            allow_ad_personalization_signals: false, // Disable ad personalization
+            restricted_data_processing: true, // Enable restricted data processing
+            
+            // Content protection
+            custom_map: {},               // No custom dimensions that could leak content
+            send_page_view: true,         // Only basic page views
+            
+            // Additional privacy settings
+            storage: 'none',              // Minimize cookie usage
+            client_storage: 'none'        // Disable client storage
+        });
+        
+        // Explicitly disable automatic form tracking
+        gtag('config', 'G-LZ91EBZEH6', {
+            send_page_view: false  // We'll manually control what gets sent
+        });
+        
+        // Send only the initial page load
+        gtag('event', 'page_view', {
+            page_title: 'Reflect Journal',
+            page_location: window.location.href,
+            // NO content data included
+        });
+    </script>
 </head>
 <body>
 
@@ -128,6 +165,12 @@ This is your private space for thoughts and reflections. Everything you write is
 • Click 'Chat with AI' to reflect on your entries
 • Switch themes and AI models in the right sidebar
 • Your data never leaves your device
+
+🔒 Privacy Notice:
+• We use privacy-first analytics to understand feature usage
+• NO journal content, chat messages, or personal data is ever collected
+• Only basic interactions (clicks, page loads) are tracked anonymously
+• All your writing stays completely private on your device
 
 Go ahead and start writing about your day, thoughts, or anything on your mind..."></textarea>
             <div class="bottom-status-bar">

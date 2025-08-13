@@ -1,9 +1,10 @@
 // Sidebar Manager Class - Handles mutual exclusivity between sidebars
 class SidebarManager {
-    constructor(leftToggle, rightToggle) {
+    constructor(leftToggle, rightToggle, analytics = null) {
         this.leftToggle = leftToggle;
         this.rightToggle = rightToggle;
         this.currentSidebar = null; // 'left', 'right', or null
+        this.analytics = analytics;
 
         console.log('SidebarManager constructor called with:', {
             leftToggle: leftToggle,
@@ -64,6 +65,11 @@ class SidebarManager {
         this.currentSidebar = side;
 
         console.log(`Body classes after opening ${side}:`, document.body.className);
+
+        // Track sidebar usage (no content tracked)
+        if (this.analytics) {
+            this.analytics.trackUIInteraction(`${side}_sidebar`, 'opened');
+        }
 
         // Update toggle button states
         this.updateToggleStates();
@@ -156,6 +162,11 @@ class ThemeManager {
         this.applyTheme(themeName, this.currentMode);
         this.savePreferences();
         this.notifyThemeChange();
+        
+        // Notify analytics if available (passed via callback)
+        if (this.onThemeChange) {
+            this.onThemeChange(themeName, this.currentMode);
+        }
     }
 
     toggleMode() {
@@ -820,6 +831,60 @@ Your structured response:`;
 
 }
 
+// Privacy-Safe Analytics Wrapper
+class PrivacyAnalytics {
+    constructor() {
+        this.enabled = typeof gtag !== 'undefined';
+        console.log('Privacy Analytics initialized:', this.enabled ? 'Enabled' : 'Disabled');
+    }
+    
+    // Track feature usage without any content
+    trackFeatureUse(feature, action = 'used') {
+        if (!this.enabled) return;
+        
+        gtag('event', action, {
+            event_category: 'feature_usage',
+            event_label: feature,
+            // NEVER include any user content or data
+            value: 1
+        });
+    }
+    
+    // Track UI interactions
+    trackUIInteraction(element, action = 'click') {
+        if (!this.enabled) return;
+        
+        gtag('event', action, {
+            event_category: 'ui_interaction',
+            event_label: element,
+            // Only track the interaction, never the content
+            value: 1
+        });
+    }
+    
+    // Track theme changes (safe - no content)
+    trackThemeChange(theme, mode) {
+        if (!this.enabled) return;
+        
+        gtag('event', 'theme_change', {
+            event_category: 'customization',
+            event_label: `${theme}_${mode}`,
+            value: 1
+        });
+    }
+    
+    // Track AI status (safe - no content)
+    trackAIStatus(status) {
+        if (!this.enabled) return;
+        
+        gtag('event', 'ai_status', {
+            event_category: 'ai_usage',
+            event_label: status,
+            value: 1
+        });
+    }
+}
+
 // Simple Journal App - Extracted JavaScript
 class SimpleJournal {
     constructor() {
@@ -832,6 +897,16 @@ class SimpleJournal {
         this.sidebarManager = null; // Will be initialized in setupElements
         this.aiService = new AIService();
         this.themeManager = new ThemeManager();
+        this.analytics = new PrivacyAnalytics();
+        
+        // Set up analytics callbacks
+        this.themeManager.onThemeChange = (theme, mode) => {
+            this.analytics.trackThemeChange(theme, mode);
+        };
+        
+        this.aiService.onStatusChange((status) => {
+            this.analytics.trackAIStatus(status);
+        });
         this.chatInterface = null;
 
         this.init();
@@ -888,7 +963,7 @@ class SimpleJournal {
             });
 
             if (this.leftToggle && this.rightToggle) {
-                this.sidebarManager = new SidebarManager(this.leftToggle, this.rightToggle);
+                this.sidebarManager = new SidebarManager(this.leftToggle, this.rightToggle, this.analytics);
                 console.log('SidebarManager created successfully:', this.sidebarManager);
             } else {
                 console.error('Toggle buttons not found!');
@@ -1098,7 +1173,9 @@ class SimpleJournal {
         this.currentEntryId = null;
         this.updateWordCount();
         this.textarea.focus();
-
+        
+        // Track new entry creation (no content tracked)
+        this.analytics.trackFeatureUse('new_entry', 'created');
     }
 
     loadEntry(entryId) {
@@ -1468,6 +1545,9 @@ class SimpleJournal {
         setTimeout(() => {
             this.floatingAIChat.classList.add('show');
         }, 10);
+        
+        // Track AI chat opening (no content tracked)
+        this.analytics.trackFeatureUse('ai_chat', 'opened');
 
         // Clear any existing messages since chat content isn't saved
         this.chatMessages.innerHTML = `
@@ -1615,6 +1695,9 @@ What do I think about these insights? How do they resonate with my experience? W
 
         // Trigger auto-save
         this.handleInput();
+        
+        // Track reflection entry creation (no content tracked)
+        this.analytics.trackFeatureUse('reflection_entry', 'created');
     }
 
     // Test panel integration
